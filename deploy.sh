@@ -1,0 +1,1 @@
+serverless deploy -v --aws-profile litpay
