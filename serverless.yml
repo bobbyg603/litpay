@@ -16,3 +16,9 @@ functions:
       - http:
           method: get
           path: hello
+  token:
+    handler: handler.token
+    events:
+      - http:
+          method: get
+          path: token

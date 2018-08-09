@@ -7,3 +7,10 @@ jspm_packages
 
 # Webpack directories
 .webpack
+
+# code coverage
+coverage
+.nyc_output
+
+# os x system files
+.DS_STORE
