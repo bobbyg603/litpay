@@ -1,5 +1,4 @@
 import { APIGatewayEvent, Callback, Context, Handler } from 'aws-lambda';
-import { tokenHandler } from './src/token/handler';
 
 export const hello: Handler = (event: APIGatewayEvent, context: Context, cb: Callback) => {
   const response = {
@@ -13,4 +12,13 @@ export const hello: Handler = (event: APIGatewayEvent, context: Context, cb: Cal
   cb(null, response);
 }
 
-export const token: Handler = tokenHandler;
+export const token: Handler = (event: APIGatewayEvent, context: Context, cb: Callback) => {
+  const response = {
+    statusCode: 200,
+    body: JSON.stringify({
+      token: "abc123"
+    })
+  };
+
+  cb(null, response);
+}
