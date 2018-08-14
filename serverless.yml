@@ -1,6 +1,9 @@
 service:
   name: litpay
 
+# custom:
+#   dynamodb:
+
 # Add the serverless-webpack plugin
 plugins:
   - serverless-webpack
@@ -8,6 +11,20 @@ plugins:
 provider:
   name: aws
   runtime: nodejs8.10
+  stage: dev
+  profile: litpay
+  environment:
+    DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
 
 functions:
   hello:
@@ -22,3 +39,27 @@ functions:
       - http:
           method: get
           path: token
+
+  createUser:
+    handler: users/users.create
+    events:
+      - http:
+          path: users
+          method: post
+
+resources:
+  Resources:
+    usersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: userId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: userId
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:provider.environment.DYNAMODB_TABLE}
+
