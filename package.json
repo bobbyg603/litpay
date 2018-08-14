@@ -8,8 +8,10 @@
     "testWithCoverage": "nyc -r lcov -e .ts -x \"test/**\" jasmine-ts \"**/*.spec.ts\" && nyc report"
   },
   "dependencies": {
+    "@types/uuid": "^3.4.3",
     "aws-lambda": "^0.1.2",
-    "source-map-support": "^0.5.0"
+    "source-map-support": "^0.5.0",
+    "uuid": "^3.3.2"
   },
   "devDependencies": {
     "@types/aws-lambda": "8.10.1",
