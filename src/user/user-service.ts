@@ -1,7 +1,7 @@
-import { DatabaseService } from '../database/database.service';
-import { User } from './user.model';
+import { DatabaseService } from '../database/database-service';
+import { User } from './user-model';
 import { AWSError } from 'aws-sdk';
-import { PutItemOutput } from 'aws-sdk/clients/dynamodb';
+import { PutItemOutput, GetItemOutput } from 'aws-sdk/clients/dynamodb';
 
 export class UserService {
 
@@ -19,5 +19,15 @@ export class UserService {
             }
         };
         this.databaseService.put(params, callback);
+    }
+
+    get(id: string, callback: (error: AWSError, data: GetItemOutput) => void) {
+        const params = {
+            TableName: process.env.DYNAMODB_TABLE,
+            Key: {
+                id: id
+            }
+        };
+        this.databaseService.get(params, callback);
     }
 }

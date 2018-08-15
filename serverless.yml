@@ -40,12 +40,19 @@ functions:
           method: get
           path: token
 
-  user:
-    handler: handler.user
+  userpost:
+    handler: src/user/user-handler.createUser
     events:
       - http:
           path: user
           method: post
+  userget: 
+    handler: src/user/user-handler.getUser
+    events:
+      - http:
+          path: user/{id}
+          method: get
+      
 
 resources:
   Resources:

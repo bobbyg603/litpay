@@ -4,8 +4,10 @@ export class User {
 
     public id: string = v4();
 
-    constructor(public firstName: string,
+    constructor(
+        public firstName: string,
         public lastName: string,
         public createdAt: number,
-        public updatedAt: number) { }
+        public updatedAt: number
+    ) { }
 }
