@@ -53,14 +53,15 @@ export const user: Handler = (event: APIGatewayEvent, context: Context, cb: Call
       return cb(null, HttpErrorResponse.create(400, { message: "Missing required property 'lastName'" }));
     }
 
-    try {
-      const timestamp = new Date().getTime();
-      const user = new User(firstName, lastName, timestamp, timestamp);
-      injector.userService.create(user);
+    const timestamp = new Date().getTime();
+    const user = new User(firstName, lastName, timestamp, timestamp);
+    injector.userService.create(user, (error, data) => {
+      if (error) {
+        return cb(error, HttpErrorResponse.create(500, { message: "Internal server error" }));
+      }
       return cb(null, HttpSuccessResponse.create(200, {}));
-    } catch (error) {
-      return cb(null, HttpErrorResponse.create(500, { message: error.message || error }));
-    }
+    });
+
   } else {
     return cb(null, HttpErrorResponse.create(400, { message: `Method '${event.httpMethod}' not supported` }));
   }

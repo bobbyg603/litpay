@@ -1,12 +1,13 @@
 import { DatabaseService } from '../database/database.service';
 import { User } from './user.model';
 import { AWSError } from 'aws-sdk';
+import { PutItemOutput } from 'aws-sdk/clients/dynamodb';
 
 export class UserService {
 
     constructor(private databaseService: DatabaseService) { }
 
-    create(user: User) {
+    create(user: User, callback: (error: AWSError, data: PutItemOutput) => void) {
         const params = {
             TableName: process.env.DYNAMODB_TABLE,
             Item: {
@@ -17,10 +18,6 @@ export class UserService {
                 updatedAt: user.updatedAt
             }
         };
-        this.databaseService.put(params, (error: AWSError) => {
-            if (error) {
-                throw error;
-            }
-        });
+        this.databaseService.put(params, callback);
     }
 }
