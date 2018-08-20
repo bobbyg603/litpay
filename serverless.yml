@@ -52,6 +52,12 @@ functions:
       - http:
           path: user/{id}
           method: get
+  userupdate:
+    handler: src/user/user-handler.updateUser
+    events:
+      - http:
+          path: user/{id}
+          method: put
       
 
 resources:
