@@ -44,7 +44,7 @@ export const createUser: Handler = (event: APIGatewayEvent, context: Context, cb
             }
             return cb(null, HttpSuccessResponse.create(200, {
                 message: "User created successfully.",
-                id: user.id
+                data: { id: user.id }
             }));
         });
     } else {
@@ -75,7 +75,7 @@ export const getUser: Handler = (event: APIGatewayEvent, context: Context, cb: C
                     404, { message: "Unable to find user" }
                 ));
             }
-            return cb(null, HttpSuccessResponse.create(200, data.Item));
+            return cb(null, HttpSuccessResponse.create(200, { data: data.Item }));
         });
     } else {
         return cb(null, HttpErrorResponse.create(
@@ -99,15 +99,12 @@ export const updateUser: Handler = (event: APIGatewayEvent, context: Context, cb
             return cb(null, HttpErrorResponse.create(
                 400, { message: "Missing request body" }
             ));
-        }
+        } 
 
-        const firstName = requestBody.firstName;
-        const lastName = requestBody.lastName;   
         const timestamp = new Date().getTime();
-
         const user = new User(
-            firstName,
-            lastName,
+            requestBody.firstName,
+            requestBody.lastName,
             null,
             timestamp
         );
@@ -122,7 +119,48 @@ export const updateUser: Handler = (event: APIGatewayEvent, context: Context, cb
                     404, { message: "Nothing was updated" }
                 ));
             }
-            return cb(null, HttpSuccessResponse.create(200, data.Attributes));
+            return cb(null, HttpSuccessResponse.create(
+                200, { 
+                    message: "User updated successfully",
+                    data: data.Attributes 
+                }
+            ));
+        });
+    } else {
+        return cb(null, HttpErrorResponse.create(
+            400, { message: `Method '${event.httpMethod}' not supported` }
+        ));
+    }
+}
+
+export const deleteUser: Handler = (event: APIGatewayEvent, context: Context, cb: Callback) => {
+    if (event.httpMethod === "DELETE") {
+        const id = event.pathParameters.id;
+        // I don't think you can get to this endpoint without an id
+        if (!id) {
+            return cb(null, HttpErrorResponse.create(
+                400, { message: "Missing id" }
+            ));
+        }
+
+        injector.userService.delete(id, (error, data) => {
+            // TODO Need to assure that the user was deleted or not
+            if (error) {
+                return cb(error, HttpErrorResponse.create(
+                    500, { message: "Internal server error" }
+                ));
+            }
+            if (!data.Attributes) {
+                return cb(error, HttpErrorResponse.create(
+                    404, { message: "Unable to delete user" }
+                ));
+            }
+            return cb(null, HttpSuccessResponse.create(
+                200, { 
+                    message: "User deleted successfully", 
+                    data: data.Attributes
+                }
+            ));
         });
     } else {
         return cb(null, HttpErrorResponse.create(

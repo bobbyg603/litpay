@@ -55,4 +55,13 @@ export class UserService {
         };
         this.databaseService.update(params, callback);
     }
+
+    delete(id: string, callback: (error: AWSError, data: DeleteItemOutput) => void) {
+        const params = {
+            TableName: process.env.DYNAMODB_TABLE,
+            Key: { id: id },
+            ReturnValues: 'ALL_OLD'
+        };
+        this.databaseService.delete(params, callback);
+    }
 }

@@ -40,7 +40,7 @@ functions:
           method: get
           path: token
 
-  userpost:
+  usercreate:
     handler: src/user/user-handler.createUser
     events:
       - http:
@@ -58,6 +58,12 @@ functions:
       - http:
           path: user/{id}
           method: put
+  userdelete:
+    handler: src/user/user-handler.deleteUser
+    events:
+      - http:
+          path: user/{id}
+          method: delete
       
 
 resources:
