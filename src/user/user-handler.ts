@@ -10,34 +10,33 @@ export let injector = {
 };
 
 export const createUser: Handler = (event: APIGatewayEvent, context: Context, cb: Callback) => {
+    // TODO BG does API gateway already handle this?
     if (event.httpMethod === "POST") {
         const requestBody = JSON.parse(event.body);
-  
+
         if (!requestBody) {
             return cb(null, HttpErrorResponse.create(
                 400, { message: "Missing request body" }
             ));
         }
-    
-        const firstName = requestBody.firstName;
-        const lastName = requestBody.lastName;
-    
-        if (!firstName) {
+
+        const user = new User(requestBody.firstName, requestBody.lastName);
+
+        if (!user.firstName) {
             return cb(null, HttpErrorResponse.create(
-                400, { message: "Missing required property 'firstName'" }
+                400, { message: "Missing required property: 'firstName'" }
             ));
         }
-    
-        if (!lastName) {
+
+        if (!user.lastName) {
             return cb(null, HttpErrorResponse.create(
-                400, { message: "Missing required property 'lastName'" }
+                400, { message: "Missing required property: 'lastName'" }
             ));
         }
-  
-        const timestamp = new Date().getTime();
-        const user = new User(firstName, lastName, timestamp, timestamp);
+
         injector.userService.create(user, (error, data) => {
             if (error) {
+                console.error(error);
                 return cb(error, HttpErrorResponse.create(
                     500, { message: "Internal server error" }
                 ));
@@ -55,17 +54,20 @@ export const createUser: Handler = (event: APIGatewayEvent, context: Context, cb
 }
 
 export const getUser: Handler = (event: APIGatewayEvent, context: Context, cb: Callback) => {
+    // TODO BG does API gateway already handle this?
     if (event.httpMethod === "GET") {
         const id = event.pathParameters.id;
+        // TODO BG does API gateway already handle this?
         // I don't think you can get to this endpoint without an id
         if (!id) {
             return cb(null, HttpErrorResponse.create(
-                400, { message: "Missing id" }
+                400, { message: "Missing required path tparameter: id" }
             ));
         }
 
         injector.userService.get(id, (error, data) => {
             if (error) {
+                console.error(error);
                 return cb(error, HttpErrorResponse.create(
                     500, { message: "Internal server error" }
                 ));
@@ -85,12 +87,14 @@ export const getUser: Handler = (event: APIGatewayEvent, context: Context, cb: C
 }
 
 export const updateUser: Handler = (event: APIGatewayEvent, context: Context, cb: Callback) => {
+    // TODO BG does API gateway already handle this?
     if (event.httpMethod === "PUT") {
         const id = event.pathParameters.id;
+        // TODO BG does API gateway already handle this?
         // I don't think you can get to this endpoint without an id
         if (!id) {
             return cb(null, HttpErrorResponse.create(
-                400, { message: "Missing id" }
+                400, { message: "Missing required path parameter: 'id'" }
             ));
         }
 
@@ -99,30 +103,28 @@ export const updateUser: Handler = (event: APIGatewayEvent, context: Context, cb
             return cb(null, HttpErrorResponse.create(
                 400, { message: "Missing request body" }
             ));
-        } 
+        }
 
-        const timestamp = new Date().getTime();
-        const user = new User(
-            requestBody.firstName,
-            requestBody.lastName,
-            null,
-            timestamp
-        );
-        injector.userService.update(id, user, (error, data) => {
+        const user = new User(requestBody.firstName, requestBody.lastName);
+        user.id = id;
+
+        injector.userService.update(user, (error, data) => {
             if (error) {
+                console.error(error);
                 return cb(null, HttpErrorResponse.create(
                     500, { message: "Internal server error" }
                 ));
             }
+            // TODO BG is this the only thing that can happen? Maybe a field was the wrong type?
             if (!data.Attributes) {
                 return cb(error, HttpErrorResponse.create(
-                    404, { message: "Nothing was updated" }
+                    400, { message: `User with '${user.id}' does not exist` }
                 ));
             }
             return cb(null, HttpSuccessResponse.create(
-                200, { 
-                    message: "User updated successfully",
-                    data: data.Attributes 
+                200, {
+                    message: `User ${user.id} updated successfully`,
+                    data: data.Attributes
                 }
             ));
         });
@@ -134,30 +136,33 @@ export const updateUser: Handler = (event: APIGatewayEvent, context: Context, cb
 }
 
 export const deleteUser: Handler = (event: APIGatewayEvent, context: Context, cb: Callback) => {
+    // TODO BG does API gateway already handle this?
     if (event.httpMethod === "DELETE") {
         const id = event.pathParameters.id;
+        // TODO BG does API gateway already handle this?
         // I don't think you can get to this endpoint without an id
         if (!id) {
             return cb(null, HttpErrorResponse.create(
-                400, { message: "Missing id" }
+                400, { message: "Missing required path parameter: 'id'" }
             ));
         }
 
         injector.userService.delete(id, (error, data) => {
-            // TODO Need to assure that the user was deleted or not
             if (error) {
+                console.error(error);
                 return cb(error, HttpErrorResponse.create(
                     500, { message: "Internal server error" }
                 ));
             }
+            // TODO BG is this the only thing that can happen? Maybe a field was the wrong type?
             if (!data.Attributes) {
                 return cb(error, HttpErrorResponse.create(
-                    404, { message: "Unable to delete user" }
+                    400, { message: `User with '${id}' does not exist` }
                 ));
             }
             return cb(null, HttpSuccessResponse.create(
-                200, { 
-                    message: "User deleted successfully", 
+                200, {
+                    message: "User deleted successfully",
                     data: data.Attributes
                 }
             ));

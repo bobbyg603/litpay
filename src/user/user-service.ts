@@ -1,22 +1,25 @@
 import { DatabaseService } from '../database/database-service';
 import { User } from './user-model';
 import { AWSError } from 'aws-sdk';
-import { PutItemOutput, GetItemOutput, 
-    UpdateItemOutput, DeleteItemOutput } from 'aws-sdk/clients/dynamodb';
+import {
+    PutItemOutput, GetItemOutput,
+    UpdateItemOutput, DeleteItemOutput
+} from 'aws-sdk/clients/dynamodb';
 
 export class UserService {
 
     constructor(private databaseService: DatabaseService) { }
 
     create(user: User, callback: (error: AWSError, data: PutItemOutput) => void) {
+        const timestamp = new Date().getTime();
         const params = {
             TableName: process.env.DYNAMODB_TABLE,
             Item: {
                 id: user.id,
                 firstName: user.firstName,
                 lastName: user.lastName,
-                createdAt: user.createdAt,
-                updatedAt: user.updatedAt
+                createdAt: timestamp,
+                updatedAt: timestamp
             }
         };
         this.databaseService.put(params, callback);
@@ -30,27 +33,19 @@ export class UserService {
         this.databaseService.get(params, callback);
     }
 
-    update(id: string, user: User, callback: (error: AWSError, data: UpdateItemOutput) => void) {
-        const firstName = user.firstName;
-        const lastName = user.lastName;
-        let expressionAttributeValues = { ':id': id, ':ua': user.updatedAt };
-        let updateExpression = 'SET ';
-        if (firstName) { 
-            updateExpression += 'firstName = :fn, ';
-            expressionAttributeValues[':fn'] = firstName;
-        };
-        if (lastName) {
-            updateExpression += 'lastName = :ln, '
-            expressionAttributeValues[':ln'] = lastName;
-        };
-        updateExpression += 'updatedAt = :ua';
-
+    update(user: User, callback: (error: AWSError, data: UpdateItemOutput) => void) {
+        const timestamp = new Date().getTime();
         const params = {
             TableName: process.env.DYNAMODB_TABLE,
-            Key: { id: id },
-            UpdateExpression: updateExpression,
+            Key: { id: user.id },
             ConditionExpression: 'id = :id',
-            ExpressionAttributeValues: expressionAttributeValues,
+            UpdateExpression: "set firstName = :fn, lastName = :ln, updatedAt = :ua",
+            ExpressionAttributeValues: {
+                ":id": user.id,
+                ":fn": user.firstName,
+                ":ln": user.lastName,
+                ":ua": timestamp
+            },
             ReturnValues: 'UPDATED_NEW'
         };
         this.databaseService.update(params, callback);

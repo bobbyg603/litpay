@@ -1,5 +1,6 @@
 import { createUser, getUser, updateUser, deleteUser, injector } from "../src/user/user-handler";
 import { UserService } from "../src/user/user-service";
+import { User } from "../src/user/user-model";
 
 describe("user-handler", () => {
     describe("createUser", () => {
@@ -28,7 +29,7 @@ describe("user-handler", () => {
             createUser(event, null, (err, response) => {
                 expect(response.statusCode).toEqual(400);
                 expect(JSON.parse(response.body).message).toEqual(
-                    "Missing required property 'firstName'"
+                    "Missing required property: 'firstName'"
                 );
             });
         });
@@ -38,22 +39,28 @@ describe("user-handler", () => {
             createUser(event, null, (err, response) => {
                 expect(response.statusCode).toEqual(400);
                 expect(JSON.parse(response.body).message).toEqual(
-                    "Missing required property 'lastName'"
+                    "Missing required property: 'lastName'"
                 );
             });
         });
 
         it("should call userService create with firstName and lastName", () => {
-            const firstName = "Bart";
-            const lastName = "Simpson";
-            const event = { httpMethod: "POST", body: JSON.stringify({ firstName, lastName }) };
+            const expectedFirstName = "Bart";
+            const expectedLastName = "Simpson";
+            const event = {
+                httpMethod: "POST",
+                body: JSON.stringify({
+                    firstName: expectedFirstName,
+                    lastName: expectedLastName
+                })
+            };
             injector.userService = jasmine.createSpyObj<UserService>("UserService", ["create"]);
             createUser(event, null, (err, response) => {
                 const spy = <jasmine.Spy>injector.userService.create;
-                const user = spy.calls.first().args[0];
+                const result = spy.calls.first().args[0];
                 expect(response.statusCode).toEqual(200);
-                expect(user.firstName).toEqual(firstName);
-                expect(user.lastName).toEqual(lastName);
+                expect(result.firstName).toEqual(expectedFirstName);
+                expect(result.lastName).toEqual(expectedLastName);
             });
         });
     });
@@ -68,18 +75,20 @@ describe("user-handler", () => {
                 ).toEqual(`Method '${unsupportedMethod}' not supported`);
             });
         });
-        it("should call userService get with id and return with user", () => {
-            const id = "409a2fd4-1f8b-4ec6-859b-d44a9ef9e702";
-            const firstName = "Bart";
-            const lastName = "Simpson";
-            const event = { httpMethod: "GET", pathParameters: { id: id } };
+
+        it("should call userService get with correct id", () => {
+            const expectedId = "409a2fd4-1f8b-4ec6-859b-d44a9ef9e702";
+            const expectedFirstName = "Bart";
+            const expectedLastName = "Simpson";
+            const event = { httpMethod: "GET", pathParameters: { id: expectedId } };
             injector.userService = jasmine.createSpyObj<UserService>("UserService", ["get"]);
             getUser(event, null, (err, response) => {
                 const spy = <jasmine.Spy>injector.userService.get;
-                // const user = spy.calls.first().args[0];
-                expect(response.statusCode).toEqual(200);
-                expect(response.body.firstName).toEqual(firstName);
-                expect(response.body.lastName).toEqual(lastName);
+                const result = spy.calls.first().args[0];
+                expect(response).toEqual(200);
+                expect(result.id).toEqual(expectedId);
+                expect(result.firstName).toEqual(expectedFirstName);
+                expect(result.lastName).toEqual(expectedLastName);
             });
         });
     });
@@ -94,12 +103,13 @@ describe("user-handler", () => {
                 ).toEqual(`Method '${unsupportedMethod}' not supported`);
             });
         });
+
         it("should return 400 request if missing request body", () => {
             const id = "409a2fd4-1f8b-4ec6-859b-d44a9ef9e702";
-            const event = { 
-                httpMethod: "PUT", 
-                pathParameters: { id: id }, 
-                body: JSON.stringify(null) 
+            const event = {
+                httpMethod: "PUT",
+                pathParameters: { id: id },
+                body: JSON.stringify(null)
             };
             updateUser(event, null, (err, response) => {
                 expect(response.statusCode).toEqual(400);
@@ -108,21 +118,23 @@ describe("user-handler", () => {
                 );
             });
         });
-        it("should call userService update with id and return only with updated items", () => {
-            const id = "409a2fd4-1f8b-4ec6-859b-d44a9ef9e702";
-            const changedLastName = "Blimpson";
-            const event = { 
-                httpMethod: "PUT", 
-                pathParameters: { id: id },
-                body: JSON.stringify({ lastName: changedLastName })
+
+        it("should call userService update with correct id, firstName and lastName", () => {
+            const expectedUser = new User("Eric", "Cartman");
+            expectedUser.id = "409a2fd4-1f8b-4ec6-859b-d44a9ef9e702";
+            const event = {
+                httpMethod: "PUT",
+                pathParameters: { id: expectedUser.id },
+                body: JSON.stringify(expectedUser)
             };
             injector.userService = jasmine.createSpyObj<UserService>("UserService", ["update"]);
             updateUser(event, null, (err, response) => {
                 const spy = <jasmine.Spy>injector.userService.update;
-                const user = spy.calls.first().args[0];
-                expect(response.statusCode).toEqual(200);
-                expect(response.body.lastName).toEqual(changedLastName);
-                expect(response.body.firstName).toBe(undefined);
+                const result = spy.calls.first().args[0];
+                expect(response).toEqual(200);
+                expect(result.id).toEqual(expectedUser.id);
+                expect(result.firstName).toEqual(expectedUser.firstName);
+                expect(response.body.lastName).toEqual(expectedUser.lastName);
             });
         });
     });
@@ -137,18 +149,16 @@ describe("user-handler", () => {
                 ).toEqual(`Method '${unsupportedMethod}' not supported`);
             });
         });
-        it("should call userService delete with id and return with deleted user", () => {
-            const id = "409a2fd4-1f8b-4ec6-859b-d44a9ef9e702";
-            const firstName = "Bart";
-            const lastName = "Simpson";
-            const event = { httpMethod: "DELETE", pathParameters: { id: id } };
+
+        it("should call userService delete with correct id", () => {
+            const expectedId = "409a2fd4-1f8b-4ec6-859b-d44a9ef9e702";
+            const event = { httpMethod: "DELETE", pathParameters: { id: expectedId } };
             injector.userService = jasmine.createSpyObj<UserService>("UserService", ["delete"]);
             deleteUser(event, null, (err, response) => {
                 const spy = <jasmine.Spy>injector.userService.delete;
-                const user = spy.calls.first().args[0];
-                expect(response.statusCode).toEqual(200);
-                expect(response.body.data.firstName).toEqual(firstName);
-                expect(response.body.data.lastName).toEqual(lastName);
+                const result = spy.calls.first().args[0];
+                expect(response).toEqual(200);
+                expect(result.id).toEqual(expectedId);
             });
         });
     });
